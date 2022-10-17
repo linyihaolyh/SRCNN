@@ -1,0 +1,77 @@
+make_patches.py - This program takes in a folder, splits them into training patches and label patches, 
+converts the images into an NP array, 
+
+For BCMSE and BCVGG we ran this command 
+
+python make_patches.py -i ./Train, -o training_inputs.npy -O training_labels.npy
+
+For NNMSE, we ran this command
+
+python make_patches.py -i ./Train, -o training_inputs_nn.npy -O training_labels_nn.npy --interpolation NEAREST_NEIGHBOR 
+
+=============================
+
+data.py - converts the output files of make_patches.py into PyTorch compatible format
+
+=============================
+model.py - our neural network
+
+=============================
+
+train.py - the training of our network, takes in the outputs of make_patches.py and returns and saves the weights every 50 epochs
+It also displays a matplot lib of the training graph. These are in the graphs folder
+
+for BCMSE we run 
+
+python train.py -s models_bicubic_mse -o training_inputs.npy -O training_labels.npy 
+
+for BCVGG we run 
+
+python train.py -s models_bicubic_vgg -o training_inputs.npy -O training_labels.npy -n 500 -v 
+
+for NNMSE we run 
+
+python train.py -s models_nn_mse -o training_inputs_nn.npy -O training_labels_nn.npy
+
+
+================================
+predict.py  - takes in a bgr formatted image from cv2, a scale factor, a path to a model, interpolation format, and padding amount
+it takes the image and converts it to a YCbCr  color space. It then normalizes to 0 and 1. Then upscales by the scale factor 
+with the given interpolation format. It takes the Y channel, feeds it to the model given and pastes the output into the interpolated image
+but offset by the padding amount in x and y directions
+
+================================
+utils.py - contains utilities
+
+================================
+
+test.py - takes in a model, a folder containing test images, interpolation format, output path, and scale factor
+
+Downscales each image by the scale factor, attempts SR with the model using the image interpolated with interpolation format, and
+saves the results in the output path.
+
+Prints PSNR metrics for each image as well
+
+for BCMSE:
+
+python test.py -m models_bicubic_mse/model2000.pth -t Test -o TestOutputBicubicMSE -s 3 -i BICUBIC
+
+for NNMSE
+
+python test.py -m models_nn_mse/model2000.pth -t Test -o TestOutputNeighborMSE -s 3 -i NEAREST_NEIGHBOR
+
+for BCVGG
+python test.py -m models_bicubic_mse/model500.pth -t Test -o TestOutputVGG -s 3 -i BICUBIC
+
+================================
+
+image_wise_psnr.py - calculates ssim and psnr between two given images
+
+
+================================
+
+interpolation_psnr.phy - calclulates ssim and psnr between image, and it downscaled by 
+the given scale factor and upscaled with the given interopolation method
+
+================================
+VGGLoss.py - model used to implement VGGLoss in a way that is compatible with our training inputs
